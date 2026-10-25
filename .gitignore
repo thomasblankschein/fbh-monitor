@@ -1,0 +1,25 @@
+# ESPHome
+esphome/secrets.yaml
+esphome/.esphome/
+.esphome/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# KiCad
+*.kicad_prl
+*-backups/
+fp-info-cache
+_autosave-*
+*.lck
+
+# FreeCAD
+*.FCStd1
+*.FCBak
+
+# System
+.DS_Store
+Thumbs.db

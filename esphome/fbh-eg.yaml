@@ -1,0 +1,58 @@
+# =============================================================================
+#  FBH-Monitor – Verteiler ERDGESCHOSS
+#  7 Heizkreise · 15 Fühlerknoten (1 Balken-VL + 7 VL + 7 RL)
+#
+#  Inbetriebnahme:
+#   1. Datei so flashen (Platzhalter-Adressen sind ok).
+#   2. Knoten einzeln an J1 stecken, neu starten, Adresse aus dem Log
+#      (one_wire) notieren und den Knoten beschriften.
+#   3. Kalibrieren: alle Knoten im Beutel ins Wasserbad (~35 °C).
+#   4. Adressen unten eintragen, Offsets aus der Kalibrierung ergänzen, neu flashen.
+# =============================================================================
+
+substitutions:
+  name: fbh-eg
+  friendly_name: FBH EG
+  pin_bus_vl: GPIO32     # Kette A (J1): Balken + Vorläufe   (EXT2-6)
+  pin_bus_rl: GPIO33     # Kette B (J2): Rückläufe            (EXT2-5)
+  intervall: 30s
+
+api:
+  encryption:
+    key: !secret fbh_eg_api_key
+
+# Referenzsensor am Vorlaufbalken (Bus A)
+sensor:
+  - platform: dallas_temp
+    one_wire_id: bus_vl
+    address: 0x0000000000000000   # TODO Adresse eintragen
+    name: VL Balken
+    id: vl_balken
+    update_interval: ${intervall}
+    filters:
+      - offset: 0.0
+
+packages:
+  basis: !include common/fbh-basis.yaml
+
+  kreis1: !include
+    file: common/fbh-kreis.yaml
+    vars: { kreis: "1", vl_addr: "0x0000000000000000", rl_addr: "0x0000000000000000", vl_offset: "0.0", rl_offset: "0.0" }
+  kreis2: !include
+    file: common/fbh-kreis.yaml
+    vars: { kreis: "2", vl_addr: "0x0000000000000000", rl_addr: "0x0000000000000000", vl_offset: "0.0", rl_offset: "0.0" }
+  kreis3: !include
+    file: common/fbh-kreis.yaml
+    vars: { kreis: "3", vl_addr: "0x0000000000000000", rl_addr: "0x0000000000000000", vl_offset: "0.0", rl_offset: "0.0" }
+  kreis4: !include
+    file: common/fbh-kreis.yaml
+    vars: { kreis: "4", vl_addr: "0x0000000000000000", rl_addr: "0x0000000000000000", vl_offset: "0.0", rl_offset: "0.0" }
+  kreis5: !include
+    file: common/fbh-kreis.yaml
+    vars: { kreis: "5", vl_addr: "0x0000000000000000", rl_addr: "0x0000000000000000", vl_offset: "0.0", rl_offset: "0.0" }
+  kreis6: !include
+    file: common/fbh-kreis.yaml
+    vars: { kreis: "6", vl_addr: "0x0000000000000000", rl_addr: "0x0000000000000000", vl_offset: "0.0", rl_offset: "0.0" }
+  kreis7: !include
+    file: common/fbh-kreis.yaml
+    vars: { kreis: "7", vl_addr: "0x0000000000000000", rl_addr: "0x0000000000000000", vl_offset: "0.0", rl_offset: "0.0" }

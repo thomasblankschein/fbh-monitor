@@ -1,0 +1,120 @@
+# =============================================================================
+#  FBH-Monitor – Home-Assistant-Package
+#  Ablage: <HA-config>/packages/fbh_monitor.yaml
+#  Voraussetzung in configuration.yaml:
+#    homeassistant:
+#      packages: !include_dir_named packages
+#  Benötigt außerdem custom_templates/fbh.jinja (Zuordnung der Stellantriebe).
+#
+#  Erzeugte Entitäten:
+#    binary_sensor.fbh_kreisfehler      Soll/Ist-Abweichung Stellantrieb ↔ Durchfluss
+#    binary_sensor.fbh_vorlauf_zu_hoch  Übertemperatur am Vorlaufbalken (Estrichschutz)
+#    binary_sensor.fbh_sensorausfall    ein oder mehrere Temperatursensoren fehlen
+#    sensor.fbh_eg_aktive_kreise / sensor.fbh_og_aktive_kreise
+# =============================================================================
+
+input_number:
+  fbh_vl_maximum:
+    name: FBH Vorlauf-Maximum
+    icon: mdi:thermometer-alert
+    min: 30
+    max: 60
+    step: 1
+    unit_of_measurement: "°C"
+    mode: box
+
+template:
+  - binary_sensor:
+      - name: FBH Kreisfehler
+        unique_id: fbh_kreisfehler
+        device_class: problem
+        icon: mdi:heating-coil
+        # Thermische Stellantriebe brauchen 3–5 min, der Kreis dann noch einige
+        # Minuten zum Durchwärmen – daher erst nach 20 min melden.
+        delay_on: "00:20:00"
+        delay_off: "00:05:00"
+        state: >
+          {% from 'fbh.jinja' import fbh_stoerungen %}
+          {{ fbh_stoerungen() | from_json | count > 0 }}
+        attributes:
+          details: >
+            {% from 'fbh.jinja' import fbh_stoerungen %}
+            {{ fbh_stoerungen() | from_json }}
+
+      - name: FBH Vorlauf zu hoch
+        unique_id: fbh_vorlauf_zu_hoch
+        device_class: problem
+        icon: mdi:thermometer-alert
+        delay_on: "00:02:00"
+        state: >
+          {% set grenze = states('input_number.fbh_vl_maximum') | float(45) %}
+          {{ states('sensor.fbh_eg_vl_balken') | float(0) > grenze
+             or states('sensor.fbh_og_vl_balken') | float(0) > grenze }}
+        attributes:
+          details: >
+            {{ ['EG Vorlauf: ' ~ states('sensor.fbh_eg_vl_balken') ~ ' °C',
+                'OG Vorlauf: ' ~ states('sensor.fbh_og_vl_balken') ~ ' °C'] }}
+
+      - name: FBH Sensorausfall
+        unique_id: fbh_sensorausfall
+        device_class: problem
+        icon: mdi:thermometer-off
+        delay_on: "00:10:00"
+        state: >
+          {{ states.sensor
+             | selectattr('entity_id', 'search', '^sensor\.fbh_(eg|og)_(vl_balken|kreis_\d_(vl|rl))$')
+             | selectattr('state', 'in', ['unavailable', 'unknown'])
+             | list | count > 0 }}
+        attributes:
+          details: >
+            {{ states.sensor
+               | selectattr('entity_id', 'search', '^sensor\.fbh_(eg|og)_(vl_balken|kreis_\d_(vl|rl))$')
+               | selectattr('state', 'in', ['unavailable', 'unknown'])
+               | map(attribute='name') | list }}
+
+  - sensor:
+      - name: FBH EG aktive Kreise
+        unique_id: fbh_eg_aktive_kreise
+        icon: mdi:valve-open
+        state_class: measurement
+        state: >
+          {{ states.binary_sensor
+             | selectattr('entity_id', 'search', '^binary_sensor\.fbh_eg_kreis_\d_durchfluss$')
+             | selectattr('state', 'eq', 'on') | list | count }}
+
+      - name: FBH OG aktive Kreise
+        unique_id: fbh_og_aktive_kreise
+        icon: mdi:valve-open
+        state_class: measurement
+        state: >
+          {{ states.binary_sensor
+             | selectattr('entity_id', 'search', '^binary_sensor\.fbh_og_kreis_\d_durchfluss$')
+             | selectattr('state', 'eq', 'on') | list | count }}
+
+automation:
+  - id: fbh_monitor_benachrichtigung
+    alias: FBH-Monitor – Benachrichtigung
+    description: Meldet Kreisfehler, Übertemperatur und Sensorausfall.
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id:
+          - binary_sensor.fbh_kreisfehler
+          - binary_sensor.fbh_vorlauf_zu_hoch
+          - binary_sensor.fbh_sensorausfall
+        to: "on"
+    actions:
+      - action: persistent_notification.create
+        data:
+          notification_id: "{{ trigger.entity_id }}"
+          title: "Fußbodenheizung: {{ trigger.to_state.name }}"
+          message: >
+            {% set d = state_attr(trigger.entity_id, 'details') %}
+            {{ d | join('\n') if d else 'Bitte Verlauf prüfen.' }}
+      # Push aufs Handy – Dienstnamen anpassen und Kommentar entfernen:
+      # - action: notify.mobile_app_DEIN_HANDY
+      #   data:
+      #     title: "Fußbodenheizung: {{ trigger.to_state.name }}"
+      #     message: >
+      #       {% set d = state_attr(trigger.entity_id, 'details') %}
+      #       {{ d | join(', ') if d else 'Bitte Verlauf prüfen.' }}

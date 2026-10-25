@@ -1,0 +1,58 @@
+# =============================================================================
+#  FBH-Monitor – ein Heizkreis
+#  Erzeugt: Kreis N VL, Kreis N RL, Kreis N Spreizung, Kreis N Durchfluss
+#  Variablen (vars): kreis, vl_addr, rl_addr, vl_offset, rl_offset
+# =============================================================================
+
+sensor:
+  - platform: dallas_temp
+    one_wire_id: bus_vl
+    address: ${vl_addr}
+    name: Kreis ${kreis} VL
+    id: k${kreis}_vl
+    update_interval: ${intervall}
+    filters:
+      - offset: ${vl_offset}
+
+  - platform: dallas_temp
+    one_wire_id: bus_rl
+    address: ${rl_addr}
+    name: Kreis ${kreis} RL
+    id: k${kreis}_rl
+    update_interval: ${intervall}
+    filters:
+      - offset: ${rl_offset}
+
+  - platform: template
+    name: Kreis ${kreis} Spreizung
+    id: k${kreis}_dt
+    icon: mdi:delta
+    unit_of_measurement: "K"
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: ${intervall}
+    lambda: |-
+      float vl = id(k${kreis}_vl).state;
+      float rl = id(k${kreis}_rl).state;
+      if (isnan(vl) || isnan(rl)) return NAN;
+      return vl - rl;
+
+binary_sensor:
+  # Durchfluss erkannt, wenn
+  #  1. Heizbetrieb aktiv,
+  #  2. Kreis-VL höchstens "Schwelle VL-Abfall" unter dem Balken liegt und
+  #  3. die Spreizung mindestens "Schwelle Mindestspreizung" beträgt.
+  - platform: template
+    name: Kreis ${kreis} Durchfluss
+    id: k${kreis}_flow
+    device_class: running
+    lambda: |-
+      if (!id(heizbetrieb).state) return false;
+      float ref = id(vl_balken).state;
+      float vl  = id(k${kreis}_vl).state;
+      float rl  = id(k${kreis}_rl).state;
+      if (isnan(ref) || isnan(vl) || isnan(rl)) return {};
+      return (ref - vl) <= id(max_vl_abfall).state &&
+             (vl - rl)  >= id(min_spreizung).state;
+    filters:
+      - delayed_on_off: 3min

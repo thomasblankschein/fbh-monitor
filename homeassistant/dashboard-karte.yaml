@@ -1,0 +1,77 @@
+# FBH-Monitor – Dashboard-Karte
+# Dashboard bearbeiten → Karte hinzufügen → "Manuell" → diesen Inhalt einfügen.
+# Für das OG eine Kopie anlegen und "fbh_eg" durch "fbh_og" ersetzen.
+type: vertical-stack
+title: Fußbodenheizung EG
+cards:
+  - type: glance
+    show_state: false
+    columns: 7
+    entities:
+      - entity: binary_sensor.fbh_eg_kreis_1_durchfluss
+        name: K1
+      - entity: binary_sensor.fbh_eg_kreis_2_durchfluss
+        name: K2
+      - entity: binary_sensor.fbh_eg_kreis_3_durchfluss
+        name: K3
+      - entity: binary_sensor.fbh_eg_kreis_4_durchfluss
+        name: K4
+      - entity: binary_sensor.fbh_eg_kreis_5_durchfluss
+        name: K5
+      - entity: binary_sensor.fbh_eg_kreis_6_durchfluss
+        name: K6
+      - entity: binary_sensor.fbh_eg_kreis_7_durchfluss
+        name: K7
+
+  - type: history-graph
+    title: Vorlauf Balken und Rückläufe
+    hours_to_show: 24
+    entities:
+      - entity: sensor.fbh_eg_vl_balken
+        name: VL Balken
+      - entity: sensor.fbh_eg_kreis_1_rl
+        name: RL K1
+      - entity: sensor.fbh_eg_kreis_2_rl
+        name: RL K2
+      - entity: sensor.fbh_eg_kreis_3_rl
+        name: RL K3
+      - entity: sensor.fbh_eg_kreis_4_rl
+        name: RL K4
+      - entity: sensor.fbh_eg_kreis_5_rl
+        name: RL K5
+      - entity: sensor.fbh_eg_kreis_6_rl
+        name: RL K6
+      - entity: sensor.fbh_eg_kreis_7_rl
+        name: RL K7
+
+  - type: history-graph
+    title: Spreizung je Kreis
+    hours_to_show: 24
+    entities:
+      - entity: sensor.fbh_eg_kreis_1_spreizung
+        name: K1
+      - entity: sensor.fbh_eg_kreis_2_spreizung
+        name: K2
+      - entity: sensor.fbh_eg_kreis_3_spreizung
+        name: K3
+      - entity: sensor.fbh_eg_kreis_4_spreizung
+        name: K4
+      - entity: sensor.fbh_eg_kreis_5_spreizung
+        name: K5
+      - entity: sensor.fbh_eg_kreis_6_spreizung
+        name: K6
+      - entity: sensor.fbh_eg_kreis_7_spreizung
+        name: K7
+
+  - type: entities
+    entities:
+      - entity: binary_sensor.fbh_eg_heizbetrieb
+        name: Heizbetrieb
+      - entity: sensor.fbh_eg_aktive_kreise
+        name: Aktive Kreise
+      - entity: binary_sensor.fbh_kreisfehler
+        name: Kreisfehler
+      - entity: binary_sensor.fbh_sensorausfall
+        name: Sensorausfall
+      - entity: binary_sensor.fbh_vorlauf_zu_hoch
+        name: Vorlauf zu hoch

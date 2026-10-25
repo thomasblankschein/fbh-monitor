@@ -1,0 +1,136 @@
+# =============================================================================
+#  FBH-Monitor – gemeinsame Basis für beide Verteiler
+#  Board: Olimex ESP32-POE-ISO (WROOM-Variante, NICHT -WROVER)
+#  steckt über EXT1/EXT2 auf der eigenen Basisplatine
+#  Wird von fbh-eg.yaml / fbh-og.yaml per "packages:" eingebunden.
+# =============================================================================
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  comment: Fußbodenheizung – Vor-/Rücklaufüberwachung je Heizkreis
+  project:
+    name: maker.fbh-monitor
+    version: "1.0"
+
+esp32:
+  board: esp32-poe-iso
+  framework:
+    type: esp-idf
+
+# Log-Level DEBUG (Standard), damit beim Start die gefundenen
+# 1-Wire-Adressen im Log erscheinen.
+logger:
+
+api:
+
+ota:
+  - platform: esphome
+
+# ---------------------------------------------------------------------------
+#  Ethernet – Werte laut ESPHome-Doku für Olimex ESP32-POE(-ISO)
+#  Achtung: Bei der WROVER-Variante liegt der Takt auf GPIO0 statt GPIO17!
+# ---------------------------------------------------------------------------
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk:
+    pin: GPIO17
+    mode: CLK_OUT
+  phy_addr: 0
+  power_pin:
+    number: GPIO12
+    ignore_strapping_warning: true   # vom Board so vorgegeben
+
+web_server:
+  port: 80
+  version: 3
+
+# ---------------------------------------------------------------------------
+#  Zwei 1-Wire-Ketten (linear, Knoten hintereinander gesteckt):
+#  Kette A (J1, GPIO32 = EXT2-6) = Balken-Referenz + 7 Vorläufe
+#  Kette B (J2, GPIO33 = EXT2-5) = 7 Rückläufe
+#  Pull-up je Kette: 4,7 kΩ nach 3,3 V auf der Basisplatine
+# ---------------------------------------------------------------------------
+one_wire:
+  - platform: gpio
+    pin: ${pin_bus_vl}
+    id: bus_vl
+  - platform: gpio
+    pin: ${pin_bus_rl}
+    id: bus_rl
+
+# ---------------------------------------------------------------------------
+#  Schwellwerte – in Home Assistant unter "Konfiguration" des Geräts änderbar
+# ---------------------------------------------------------------------------
+number:
+  - platform: template
+    name: Heizbetrieb ab Vorlauf
+    id: min_vorlauf
+    icon: mdi:thermometer-chevron-up
+    unit_of_measurement: "°C"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 25
+    min_value: 20
+    max_value: 40
+    step: 0.5
+
+  - platform: template
+    name: Schwelle VL-Abfall Kreis
+    id: max_vl_abfall
+    icon: mdi:arrow-down-thin
+    unit_of_measurement: "K"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 2.0
+    min_value: 0.5
+    max_value: 10
+    step: 0.5
+
+  - platform: template
+    name: Schwelle Mindestspreizung
+    id: min_spreizung
+    icon: mdi:delta
+    unit_of_measurement: "K"
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    initial_value: 1.0
+    min_value: 0.2
+    max_value: 5
+    step: 0.1
+
+binary_sensor:
+  - platform: status
+    name: Status
+
+  # Heizbetrieb = Vorlaufbalken wärmer als Schwelle. Ohne Heizbetrieb
+  # werden alle Kreise als "kein Durchfluss" gemeldet (keine Fehlalarme im Sommer).
+  - platform: template
+    name: Heizbetrieb
+    id: heizbetrieb
+    device_class: heat
+    lambda: |-
+      float ref = id(vl_balken).state;
+      if (isnan(ref)) return {};
+      return ref > id(min_vorlauf).state;
+    filters:
+      - delayed_on: 2min
+      - delayed_off: 10min
+
+sensor:
+  - platform: uptime
+    name: Laufzeit
+
+text_sensor:
+  - platform: ethernet_info
+    ip_address:
+      name: IP-Adresse
+
+button:
+  - platform: restart
+    name: Neustart

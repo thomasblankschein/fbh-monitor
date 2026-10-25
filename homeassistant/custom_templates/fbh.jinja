@@ -1,0 +1,42 @@
+{#- ==========================================================================
+    FBH-Monitor – Soll/Ist-Vergleich Stellantrieb ↔ gemessener Durchfluss
+    Ablage: <HA-config>/custom_templates/fbh.jinja
+    Danach einmal: Entwicklerwerkzeuge → YAML → "Benutzerdefinierte Jinja2-
+    Vorlagen neu laden" (oder HA neu starten).
+
+    ZUORDNUNG ANPASSEN: rechts die Entität deines Stellantriebs eintragen.
+    Erwartet wird eine Entität mit Zustand on/off (switch, binary_sensor,
+    input_boolean …). Nicht existierende Entitäten werden ignoriert – du
+    kannst also Kreis für Kreis in Betrieb nehmen.
+    ========================================================================== -#}
+
+{%- macro fbh_stoerungen() -%}
+{%- set zuordnung = {
+  'binary_sensor.fbh_eg_kreis_1_durchfluss': 'switch.STELLANTRIEB_EG_K1',
+  'binary_sensor.fbh_eg_kreis_2_durchfluss': 'switch.STELLANTRIEB_EG_K2',
+  'binary_sensor.fbh_eg_kreis_3_durchfluss': 'switch.STELLANTRIEB_EG_K3',
+  'binary_sensor.fbh_eg_kreis_4_durchfluss': 'switch.STELLANTRIEB_EG_K4',
+  'binary_sensor.fbh_eg_kreis_5_durchfluss': 'switch.STELLANTRIEB_EG_K5',
+  'binary_sensor.fbh_eg_kreis_6_durchfluss': 'switch.STELLANTRIEB_EG_K6',
+  'binary_sensor.fbh_eg_kreis_7_durchfluss': 'switch.STELLANTRIEB_EG_K7',
+  'binary_sensor.fbh_og_kreis_1_durchfluss': 'switch.STELLANTRIEB_OG_K1',
+  'binary_sensor.fbh_og_kreis_2_durchfluss': 'switch.STELLANTRIEB_OG_K2',
+  'binary_sensor.fbh_og_kreis_3_durchfluss': 'switch.STELLANTRIEB_OG_K3',
+  'binary_sensor.fbh_og_kreis_4_durchfluss': 'switch.STELLANTRIEB_OG_K4',
+  'binary_sensor.fbh_og_kreis_5_durchfluss': 'switch.STELLANTRIEB_OG_K5',
+  'binary_sensor.fbh_og_kreis_6_durchfluss': 'switch.STELLANTRIEB_OG_K6',
+  'binary_sensor.fbh_og_kreis_7_durchfluss': 'switch.STELLANTRIEB_OG_K7',
+} -%}
+{%- set ns = namespace(fehler=[]) -%}
+{%- for fluss, antrieb in zuordnung.items() -%}
+  {%- set heizbetrieb = fluss.split('_kreis_')[0] ~ '_heizbetrieb' -%}
+  {%- set soll = states(antrieb | lower) -%}
+  {%- set ist = states(fluss) -%}
+  {%- if is_state(heizbetrieb, 'on') and soll in ['on', 'off'] and ist in ['on', 'off'] and soll != ist -%}
+    {%- set name = state_attr(fluss, 'friendly_name') | replace(' Durchfluss', '') -%}
+    {%- set text = 'Ventil offen, aber kein Durchfluss' if soll == 'on' else 'Ventil zu, aber Durchfluss' -%}
+    {%- set ns.fehler = ns.fehler + [name ~ ': ' ~ text] -%}
+  {%- endif -%}
+{%- endfor -%}
+{{- ns.fehler | to_json -}}
+{%- endmacro -%}
