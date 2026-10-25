@@ -1,13 +1,8 @@
 Menge,Reichelt-Artikelnummer,Hersteller-Teilenummer,Bauteil,Stueckpreis_brutto,Hinweis
-4,MPE 087-1-010,087-1-010-0-S-XS0-1260,Stiftleiste 1x10 2.54 mm,0.25,
 4,MPE 094-1-010,094-1-010-0-NFX-YS0,Buchsenleiste 1x10 2.54 mm 8.5 mm hoch,0.44,
-10,METALL 4,70K,YAGEO MF0207 4k7,Widerstand 4.7 kOhm 0207 1%,0.05,Staffelpreis ab 10
 35,12061C104KAT2A,12061C104KAT2A,Kondensator 100 nF 1206 X7R 100 V,0.04,
-70,JST PH3P ST90,S3B-PH-K-S,JST-PH Buchse 3-pol gewinkelt,0.24,
 32,DS 18B20,DS18B20+,Temperaturfuehler TO-92 (Maxim),1.40,
 1,ARCTIC 04007,ACTPD00057A,Waermeleitpad Arctic TP-3 120x20x1.5 mm 4er Pack,6.95,
-37,JST PH3P BU,PHR-3,JST-PH Gehaeuse 3-pol,0.05,Nur 37 verfuegbar (Bedarf 60-70) - Rest nachbestellen
-200,JST PH CKL,SPH-002T-P0.5L,Crimpkontakt PH 24-28 AWG,0.03,
 1,ECON KL014SW10,KL014SW10,Kupferlitze 0.14 mm2 schwarz 10 m (GND) Ø 1.3 mm,2.40,
 1,ECON KL014RT10,KL014RT10,Kupferlitze 0.14 mm2 rot 10 m (VDD),2.40,
 1,ECON KL014OR10,KL014OR10,Kupferlitze 0.14 mm2 orange 10 m (DQ - gelb nicht als 10 m),2.40,
