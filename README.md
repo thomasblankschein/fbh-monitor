@@ -33,8 +33,20 @@ Die Schwellwerte lassen sich in Home Assistant auf der Geräteseite anpassen.
 ![Fühlerknoten im Rohrclip, Schnitt](docs/bilder/schnitt.jpg)
 
 Die vollständige Anleitung mit Schaltplänen, Maßzeichnungen, Bauteilliste und Inbetriebnahme liegt in
-[`docs/bauanleitung.html`](docs/bauanleitung.html). Die Digi-Key-Positionen für beide Verteiler stehen in
-[`bestellung/digikey_warenkorb.csv`](bestellung/digikey_warenkorb.csv).
+[`docs/bauanleitung.html`](docs/bauanleitung.html).
+
+## Bestellung
+
+Die Bauteile für beide Verteiler sind auf zwei Shops aufgeteilt (Stand 25.10.2026, alles ab Lager):
+
+| Shop | Positionen | Liste |
+|---|---|---|
+| Digi-Key | Olimex ESP32-POE-ISO (3), Stiftleisten, JST-PH-Buchsen, PHR-3-Gehäuse, Crimpkontakte | [`bestellung/digikey_warenkorb.csv`](bestellung/digikey_warenkorb.csv) |
+| reichelt | Buchsenleisten, DS18B20 (Maxim), Widerstände, Kondensatoren, Wärmeleitpad, Litze | [`bestellung/reichelt_warenkorb.csv`](bestellung/reichelt_warenkorb.csv) |
+
+Lokal zu besorgen: FR4 einseitig, PETG/ASA, 2K-Epoxid, Armaflex-Band, M2-Schrauben (4 × M2 × 16 mit Mutter,
+4 × M2 × 6), Patchkabel, PoE-Port (802.3af) und eine Crimpzange für JST-PH.
+Die Datenleitung DQ ist in der reichelt-Variante **orange** statt gelb.
 
 ## Verzeichnisse
 
@@ -51,9 +63,11 @@ homeassistant/
   dashboard-karte.yaml             Dashboard-Karte
 cad/
   fbh_cad.py             parametrische Modelle (CadQuery)
+  render_ansichten.py    Renderings der Modelle (PyVista)
   export/                STEP- und druckfertige STL-Dateien
 docs/                    Bauanleitung und Renderings
-bestellung/              Digi-Key-Warenkorb
+bestellung/              Warenkörbe Digi-Key und reichelt
+CLAUDE.md                Projektkontext und Entscheidungen für Claude Code
 ```
 
 ## Schnellstart
@@ -82,6 +96,7 @@ pip install cadquery
 cd cad
 python fbh_cad.py          # Clips für Abgang (17,3 mm) und Balken (26,7 mm)
 python fbh_cad.py 20.0     # Clip für beliebigen Rohrdurchmesser
+pip install pyvista && python render_ansichten.py   # Renderings nach cad/renders/
 ```
 
 Clips mit der Rastnasen-Seite nach unten drucken, ohne Stützmaterial, mit Brim.
@@ -90,13 +105,18 @@ Clips mit der Rastnasen-Seite nach unten drucken, ohne Stützmaterial, mit Brim.
 
 - [x] Konzept, Schaltpläne, Bauteilliste
 - [x] ESPHome- und Home-Assistant-Konfiguration (validiert mit ESPHome 2026.10)
-- [x] Rohrclips und Distanzhülse als Druckdateien
+- [x] Rohrclips (Abgang Ø 17,3 mm, Balken Ø 26,7 mm × 16 mm) und Distanzhülse als Druckdateien
+- [x] Bauteile bei Digi-Key und reichelt ausgewählt, Warenkörbe gefüllt
+- [ ] Bestellung auslösen
 - [ ] KiCad-Projekte für Basisplatine und Fühlerknoten
 - [ ] Gehäuse für das Modul
-- [ ] Erster Aufbau und Test am Verteiler
+- [ ] Stellantrieb-Entitäten in `homeassistant/custom_templates/fbh.jinja` eintragen
+- [ ] ESPHome-Firmware kompilieren und flashen (Konfiguration ist validiert, Kompilierung noch nicht getestet)
+- [ ] Erster Aufbau, Kalibrierung und Test am Verteiler
 
 ## Hinweise
 
 - Die Pinbelegung von EXT1/EXT2 stammt aus dem KiCad-Layout des Olimex ESP32-POE-ISO (Rev. O).
 - Das Olimex-Board ist in den CAD-Modellen vereinfacht (Umriss, Löcher, Steckleisten, Modul, RJ45, USB).
+- Pinfolge an allen JST-PH-Steckern: 1 GND · 2 DQ · 3 VDD.
 - Fertige JST-Kabel sind oft gedreht belegt. Jedes Kabel vor dem Einstecken prüfen: Pin 1 auf Pin 1.

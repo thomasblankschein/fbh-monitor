@@ -23,3 +23,6 @@ _autosave-*
 # System
 .DS_Store
 Thumbs.db
+
+# Renderings (erzeugt)
+cad/renders/
